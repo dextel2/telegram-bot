@@ -1,10 +1,7 @@
 import { Bot, InlineKeyboard } from "grammy";
 import * as dotenv from "dotenv";
-import logger from "../utils/logger";
+import logger from "./utils/logger";
 import Together from "together-ai";
-
-
-
 
 dotenv.config();
 

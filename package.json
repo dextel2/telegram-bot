@@ -4,7 +4,7 @@
   "description": "A Telegram bot powered by AI using Llama models.",
   "main": "index.ts",
   "scripts": {
-    "start": "npx ts-node index.ts",
+    "start": "npm run build && node dist/index.js",
     "dev": "npx ts-node-dev --respawn index.ts",
     "build": "tsc",
     "docker:build": "docker build -t telegram-ai-bot .",
