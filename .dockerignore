@@ -1,9 +1,2 @@
-node_modules
-dist
-coverage
-logs
-.git
-.gitignore
-README.md
-Dockerfile
-docker-compose.yml
+node_modules/
+dist/

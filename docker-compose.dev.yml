@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  bot:
+    build: 
+      context: .
+      target: development
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - 8080:1337
+    command: npm run dev

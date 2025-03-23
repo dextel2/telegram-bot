@@ -1,16 +1,26 @@
-FROM node:18-slim
+FROM node:18-apline as development
 
-WORKDIR /app
+WORKDIR /usr/src/app
 
-COPY package*.json ./
-COPY tsconfig.json ./
-COPY .env ./
-COPY src ./src
-COPY utils ./utils
-COPY index.ts ./
+COPY package*.json .
 
 RUN npm install
 
+COPY . .
+
 RUN npm run build
 
-CMD ["node", "dist/index.js"]
+FROM node:18-apline as production
+
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+
+WORKDIR /usr/src/app
+
+COPY package*.json .
+
+RUN npm ci --only=production
+
+COPY --from=development user/src/app/dist ./dist
+
+CMD [ "node",'dist/index.js' ]
