@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node';
 
-Sentry.init({
+export const init = Sentry.init({
 	dsn: process.env.SENTRY_DSN,
 	profileSessionSampleRate: 1.0,
 });

@@ -2,6 +2,7 @@ import { Bot, InlineKeyboard } from "grammy";
 import * as dotenv from "dotenv";
 import logger from "./utils/logger";
 import Together from "together-ai";
+import { init } from "./utils/sentry";
 
 dotenv.config();
 
@@ -15,7 +16,8 @@ const together = new Together({
 const models = {
 	"Meta Llama 3.3 70B Instruct Turbo Free": "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
 	"Meta Llama Vision Free": "meta-llama/Llama-Vision-Free",
-	"DeepSeek R1 Distill Llama 70B Free": "deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free"
+	"DeepSeek R1 Distill Llama 70B Free": "deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free",
+	"Generate Image": 'black-forest-labs/FLUX.1-schnell-Free'
 };
 
 const userModelMap = new Map<number, string>(); // Store user-selected models
@@ -44,6 +46,41 @@ async function getAIResponse(prompt: string, model: string): Promise<string> {
 	});
 }
 
+/**
+ * @function generateImages
+ * @access private
+ * @author dextel2
+ * @event prompt
+ * @todo -- revisit the function to generate images after togerther AI fix the issue
+ * @since 2022-02-22
+ * @copyright The Unlicense
+ * @license The Unlicense
+ * @version v0.0.1-beta
+ * @description -- Generate images using together AI
+ * @param prompt -- The prompt to generate images
+ * @param model -- The model to use for generating images
+ * @returns -- The generated images
+ */
+async function generateImages(prompt: string, model: string): Promise<string> {
+	return new Promise<string>(async (resolve) => {
+		const response = await together.images.create({
+			"prompt": `${prompt}`,
+			"model": `${model}`,
+			steps: 4,
+			n: 4
+		});
+
+		if (response.data && response.data[0].b64_json) {
+			logger.info(`⚡Together AI response: `);
+			resolve(response.data[0].b64_json);
+		} else {
+			logger.error('⚡Together AI response is undefined or invalid');
+			resolve('✨Something Went Wrong! Please try again later.');
+		}
+	});
+}
+
+
 
 // Function to create the model selection menu
 function getModelMenu() {
@@ -56,8 +93,9 @@ function getModelMenu() {
 
 
 export const run = () => {
+	init;
 	bot.command("start", (ctx) => {
-		ctx.reply(`Hello ${ctx.from?.first_name}! Select an AI model:`, {
+		ctx.reply(`Hello ${ctx.from?.first_name}! Select an AI model: `, {
 			reply_markup: getModelMenu(),
 		});
 	});
@@ -96,7 +134,7 @@ export const run = () => {
 		const modelKey = ctx.callbackQuery.data as keyof typeof models;
 		if (models[modelKey]) {
 			userModelMap.set(ctx.from.id, models[modelKey]);
-			await Promise.all([ctx.answerCallbackQuery(`Model set to ${modelKey}!`), ctx.editMessageReplyMarkup({ reply_markup: { inline_keyboard: [] } }), ctx.reply(`✅ You selected **${modelKey}**. Now send a message!`)]);
+			await Promise.all([ctx.answerCallbackQuery(`Model set to ${modelKey}!`), ctx.editMessageReplyMarkup({ reply_markup: { inline_keyboard: [] } }), ctx.reply(`✅ You selected ** ${modelKey} **.Now send a message!`)]);
 		}
 	});
 
@@ -108,18 +146,25 @@ export const run = () => {
 		// Send "Thinking..." message and store the sent message
 		const thinkingMessage = await ctx.reply("Thinking... 🤖");
 
-		// Get AI response
-		const aiResponse = await getAIResponse(userMessage, model);
+		logger.info(`👤 User message: ${model}`);
+		if (model === 'black-forest-labs/FLUX.1-schnell-Free') {
+			const aiResponse = await generateImages(userMessage, model);
+			await ctx.reply(aiResponse);
+			await ctx.api.deleteMessage(ctx.chat.id, thinkingMessage.message_id);
+		} else {
+			// Get AI response
+			const aiResponse = await getAIResponse(userMessage, model);
+			await ctx.reply(aiResponse);
+			await ctx.api.deleteMessage(ctx.chat.id, thinkingMessage.message_id);
+		}
 
 		// Delete the "Thinking..." message
-		await ctx.api.deleteMessage(ctx.chat.id, thinkingMessage.message_id);
 
 		// Send AI response
-		await ctx.reply(aiResponse);
 	});
 
 
 	bot.start();
 	logger.info("🤖 Bot is running...");
 
-};
+};;
