@@ -45,7 +45,6 @@ async function getAIResponse(prompt: string, model: string): Promise<string> {
 }
 
 
-// Function to create the model selection menu
 function getModelMenu() {
 	const keyboard = new InlineKeyboard();
 	Object.keys(models).forEach((key) => {
@@ -83,7 +82,6 @@ export const run = () => {
 
 	bot.command("shutdown", (ctx) => {
 		ctx.reply("Shutting down the bot...").then(() => {
-			// Gracefully stop the bot before exiting
 			bot.stop();
 			process.exit(0);
 		});
@@ -105,16 +103,12 @@ export const run = () => {
 		const userMessage = ctx.message.text || "";
 		const model = userModelMap.get(ctx.from.id) || models["DeepSeek R1 Distill Llama 70B Free"];
 
-		// Send "Thinking..." message and store the sent message
 		const thinkingMessage = await ctx.reply("Thinking... 🤖");
 
-		// Get AI response
 		const aiResponse = await getAIResponse(userMessage, model);
 
-		// Delete the "Thinking..." message
 		await ctx.api.deleteMessage(ctx.chat.id, thinkingMessage.message_id);
 
-		// Send AI response
 		await ctx.reply(aiResponse);
 	});
 
